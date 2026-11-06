@@ -41,6 +41,12 @@ if (document.fonts && document.fonts.load) document.fonts.load(`8px ${FONT}`).ca
 // Installable + offline: register the service worker (skipped for the test build and the single-file bundle).
 if ('serviceWorker' in navigator && location.hash !== '#dev' && document.querySelector('link[rel="manifest"]')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { /* offline mode just won't be available */ }));
+  // show "OFFLINE READY" on the title screen once the whole game is cached
+  const checkOffline = () => caches.keys()
+    .then((keys) => Promise.all(keys.map((k) => caches.open(k).then((c) => c.match('src/main.js')))))
+    .then((hits) => { G.offlineReady = hits.some(Boolean); if (!G.offlineReady) setTimeout(checkOffline, 2000); })
+    .catch(() => {});
+  navigator.serviceWorker.ready.then(checkOffline);
 }
 
 // Test hooks for the automated QA scripts in /tools. Not reachable in normal play.

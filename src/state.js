@@ -58,6 +58,8 @@ export const G = {
   touch: ('ontouchstart' in window) || navigator.maxTouchPoints > 0,
   S: 3,
 
+  offlineReady: false,   // every game file is cached, so it will also run with no connection
+
   // test hooks (only reachable through the #dev build)
   ghost: false,
   noCamp: false,

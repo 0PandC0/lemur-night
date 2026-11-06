@@ -190,6 +190,7 @@ function drawTitle(t) {
   draw(SPR.lemurA, 51 + LEMUR_OFFSET.right, PY);
   txt(G.touch ? 'DRAG ANYWHERE TO MOVE' : 'ARROWS / A D OR DRAG', LW / 2, 206, 4, '#ffffff', 'center', false);
   txt(G.best > NIGHTS ? 'BEST: LEGEND' : G.best ? 'BEST: NIGHT ' + G.best : '30 NIGHTS. GOOD LUCK.', 3, 5, 4, '#ffd23f', 'left', false);
+  if (G.offlineReady) txt('OFFLINE READY', 3, 11.5, 4, '#8af07a', 'left', false);
   soundToggles();
 }
 

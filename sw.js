@@ -1,6 +1,6 @@
 // Offline support: every file the game needs is cached on first visit, so it also plays with no connection.
 // Bump VERSION whenever you publish changes; old caches are cleared automatically.
-const VERSION = 'lemur-night-v1';
+const VERSION = 'lemur-night-v2';
 const FILES = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
   'assets/fonts/silkscreen.woff2',
@@ -10,7 +10,10 @@ const FILES = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  // cache files one by one: a single hiccup (flaky network, a stale CDN response) must not block offline mode
+  e.waitUntil(caches.open(VERSION)
+    .then((c) => Promise.allSettled(FILES.map((f) => fetch(f, { cache: 'reload' }).then((r) => (r.ok ? c.put(f, r) : null)))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
