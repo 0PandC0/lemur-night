@@ -7,6 +7,8 @@ import { startRun, beginNight, wantedTrack } from './world.js';
 const onResultScreen = () => G.state === 'title' || G.state === 'dead' || G.state === 'win';
 const inSoundToggle = (p) => p.y < 8.5 && p.x > LW - 42;
 const inMusicToggle = (p) => p.y >= 8.5 && p.y < 15 && p.x > LW - 42;
+/** The pause button in the top-right corner of the HUD (hit area a bit bigger than the icon, for fingers). */
+const inPauseButton = (p) => p.y < 16 && p.x > LW - 17;
 
 export function setPaused(v) {
   G.paused = v;
@@ -39,6 +41,7 @@ export function bindInput(cv) {
     const p = toLogical(e);
     if (onResultScreen() && inSoundToggle(p)) { toggleMute(); return; }
     if (onResultScreen() && inMusicToggle(p)) { audio(); toggleMusic(); return; }
+    if (G.state === 'play' && !G.paused && inPauseButton(p)) { setPaused('paused'); return; }
     if (G.state === 'play' && !G.paused) {
       Object.assign(G.drag, { active: true, x: p.x, startX: p.x, startPx: G.px });
       try { cv.setPointerCapture(e.pointerId); } catch (_) { /* older browsers */ }

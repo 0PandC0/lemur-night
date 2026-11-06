@@ -139,6 +139,10 @@ async def real_input(page):
     await page.mouse.move(cx, cy); await page.mouse.down(); await page.mouse.move(cx - box["width"] * 0.25, cy, steps=8)
     await page.wait_for_timeout(100); await page.mouse.up()
     r["dragMoves"] = round(await g("GAME.G.px") - x0, 1)
+    await page.mouse.click(box["x"] + box["width"] * 0.94, box["y"] + box["height"] * 0.03); await page.wait_for_timeout(50)
+    r["pauseButtonTap"] = await g("GAME.G.paused")
+    await page.mouse.click(cx, cy); await page.wait_for_timeout(50)
+    r["tapResumes"] = await g("GAME.G.paused")
     await page.keyboard.press("p"); r["pPauses"] = await g("GAME.G.paused")
     await page.keyboard.press("p"); r["pResumes"] = await g("GAME.G.paused")
     m0 = await g("GAME.music.on"); await page.keyboard.press("n"); r["nTogglesMusic"] = m0 != await g("GAME.music.on"); await page.keyboard.press("n")
@@ -181,7 +185,7 @@ def verdicts(res):
     v.append(("all text fits", not res["textOverflow"], str(res["textOverflow"])))
     i = res["input"]
     v.append(("real keyboard/mouse/touch input works", i["spaceStarts"] == "play" and i["arrowRightMoves"] > 10 and i["aMovesLeft"] < -10 and i["dragMoves"] < -10
-              and i["pPauses"] == "paused" and i["pResumes"] is None and i["nTogglesMusic"] and i["deadScreen"] == "dead" and i["clickPlaysAgain"] == "play" and i["soundToggleClick"], str(i)))
+              and i["pauseButtonTap"] == "paused" and i["tapResumes"] is None and i["pPauses"] == "paused" and i["pResumes"] is None and i["nTogglesMusic"] and i["deadScreen"] == "dead" and i["clickPlaysAgain"] == "play" and i["soundToggleClick"], str(i)))
     v.append(("no console / page errors", not res["errors"], str(res["errors"][:3])))
     return v
 

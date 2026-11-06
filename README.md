@@ -26,7 +26,7 @@ A tiny pixel-art survival game for the browser. You're a mouse lemur in a Madaga
 - **Night 15 boss: the fossa**, Madagascar's real lemur predator. It prowls the branch above you, shakes down seed pods, drops thorny branches with one gap, sends wasps and pounces down a marked column. Survive until it gives up.
 - A victory dance after every night, a best score saved on your device, and a rank when you're done.
 
-**Controls:** arrow keys / A D, or drag anywhere on touch screens · Space to start/skip · P pause · M sound · N music
+**Controls:** arrow keys / A D, or drag anywhere on touch screens · Space to start/skip · P or the ⏸ button (top right) to pause · M sound · N music
 
 ## How it's built
 

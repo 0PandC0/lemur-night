@@ -130,11 +130,16 @@ function drawHUD() {
   if (G.boss) txt('BOSS', 3, 12.5, 4, '#ff8a6a', 'left');
   else if (isStorm(G.night)) txt('STORM', 3, 12.5, 4, '#9ec8ff', 'left');
   draw(SPR.heart, 52, 3);
-  box(60, 3, 57, 7, '#2a2020');
+  box(60, 3, 46, 7, '#2a2020');
   const pct = Math.max(0, G.hp) / 100, col = pct > 0.6 ? '#2ecc55' : pct > 0.3 ? '#ffd23f' : '#ff4a4a';
-  if (pct > 0) { rect(61, 4, Math.round(55 * pct), 5, col); rect(61, 4, Math.round(55 * pct), 1, 'rgba(255,255,255,0.45)'); }
+  if (pct > 0) { rect(61, 4, Math.round(44 * pct), 5, col); rect(61, 4, Math.round(44 * pct), 1, 'rgba(255,255,255,0.45)'); }
   if (G.shield > 0) txt('SHIELD x' + G.shield, 61, 12.5, 4, '#8af07a', 'left');
-  if (G.hasBeetle) draw(SPR.beetleMini, LW - 9, 8);
+  if (G.hasBeetle) draw(SPR.beetleMini, G.shield > 0 ? 92 : 61, 8);
+  // pause button (tap it on phones, or press P)
+  if (G.state === 'play' && !G.paused) {
+    box(108, 2, 10, 10, 'rgba(255,255,255,0.14)', '#bfe0d0');
+    rect(111, 4, 2, 6, '#ffffff'); rect(114, 4, 2, 6, '#ffffff');
+  }
   if (G.boss) {
     rect(0, 15, LW, 5, 'rgba(6,14,14,0.85)');
     txt('HUNGER', 2, 17.6, 4, '#ffb08a', 'left', false);
