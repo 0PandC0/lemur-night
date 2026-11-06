@@ -1,0 +1,13 @@
+{
+  "name": "lemur-night",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A tiny pixel-art survival game: a mouse lemur dodges falling dangers for 30 nights.",
+  "scripts": {
+    "start": "python3 -m http.server 8765",
+    "bundle": "python3 tools/bundle.py"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
