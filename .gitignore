@@ -1,0 +1,5 @@
+node_modules/
+dist/
+__pycache__/
+tools/qa_result.json
+tools/_frames/
