@@ -1,0 +1,23 @@
+<!doctype html><body style="margin:0"><script type="module">
+// Renders the app icons from the in-game sprites. Used by tools/icons.py.
+import { SPR, LEMUR_OFFSET } from '../src/sprites.js';
+window.icon = (size, scale) => {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  const grd = g.createLinearGradient(0, 0, 0, size); grd.addColorStop(0, '#0a1e2c'); grd.addColorStop(1, '#1a4848');
+  g.fillStyle = grd; g.fillRect(0, 0, size, size);
+  const px = (v) => Math.round(v * size);
+  // moon
+  g.fillStyle = '#f4f0d0'; g.beginPath(); g.arc(px(0.74), px(0.26), px(0.075), 0, Math.PI * 2); g.fill();
+  // branch
+  g.fillStyle = '#141018'; g.fillRect(0, px(0.72), size, px(0.1));
+  g.fillStyle = '#4a301e'; g.fillRect(0, px(0.735), size, px(0.08));
+  g.fillStyle = '#7a5034'; g.fillRect(0, px(0.735), size, px(0.015));
+  // the lemur, integer-scaled, body centred
+  const s = SPR.lemurA, w = s.width * scale, h = s.height * scale;
+  const bodyCentre = (8.5 - LEMUR_OFFSET.right) * scale;
+  g.drawImage(s, Math.round(size / 2 - bodyCentre), px(0.74) - h, w, h);
+  return c.toDataURL('image/png');
+};
+window.ready = true;
+</script>

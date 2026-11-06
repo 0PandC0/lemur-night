@@ -38,6 +38,11 @@ resize();
 requestAnimationFrame(frame);
 if (document.fonts && document.fonts.load) document.fonts.load(`8px ${FONT}`).catch(() => {});
 
+// Installable + offline: register the service worker (skipped for the test build and the single-file bundle).
+if ('serviceWorker' in navigator && location.hash !== '#dev' && document.querySelector('link[rel="manifest"]')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { /* offline mode just won't be available */ }));
+}
+
 // Test hooks for the automated QA scripts in /tools. Not reachable in normal play.
 if (location.hash === '#dev') {
   window.GAME = {

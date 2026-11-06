@@ -6,7 +6,8 @@ js = subprocess.run(["npx", "esbuild", "src/main.js", "--bundle", "--format=iife
 font = base64.b64encode(open(os.path.join(ROOT, "assets/fonts/silkscreen.woff2"), "rb").read()).decode()
 css = open(os.path.join(ROOT, "style.css")).read().replace('url("assets/fonts/silkscreen.woff2")', f'url(data:font/woff2;base64,{font})')
 html = open(os.path.join(ROOT, "index.html")).read()
-html = html.replace('  <link rel="preload" href="assets/fonts/silkscreen.woff2" as="font" type="font/woff2" crossorigin>\n', "")
+import re
+html = re.sub(r'  <(link rel="(preload|manifest|icon|apple-touch-icon)"|meta name="(apple-mobile|mobile-web)|!-- iPhone)[^\n]*\n', "", html)
 html = html.replace('<link rel="stylesheet" href="style.css">', f"<style>{css}</style>")
 html = html.replace('<script type="module" src="src/main.js"></script>', f"<script>{js}</script>")
 os.makedirs(os.path.join(ROOT, "dist"), exist_ok=True)

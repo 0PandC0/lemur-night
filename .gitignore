@@ -3,3 +3,4 @@ dist/
 __pycache__/
 tools/qa_result.json
 tools/_frames/
+tools/offline_check.png

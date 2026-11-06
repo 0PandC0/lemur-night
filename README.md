@@ -6,7 +6,12 @@ A tiny pixel-art survival game for the browser. You're a mouse lemur in a Madaga
   <img src="docs/gameplay.gif" alt="Gameplay: dodging coconuts, snakes and owls, then the fossa boss" width="240">
 </p>
 
-**[▶ Play it here](https://0pandc0.github.io/lemur-night/)**: works on phone and desktop, no install.
+**[▶ Play it here](https://0pandc0.github.io/lemur-night/)**: works on phone and desktop, no install needed.
+
+**Install it as an app (plays offline):** open the link once, then
+- **iPhone / iPad (Safari):** Share → *Add to Home Screen*
+- **Android (Chrome):** menu ⋮ → *Install app* / *Add to Home screen*
+- **Desktop (Chrome / Edge):** the install icon in the address bar
 
 | Title | A busy night | Night 15: the fossa |
 |---|---|---|
@@ -34,10 +39,11 @@ Plain JavaScript (ES modules) and a single `<canvas>`. No framework, no build st
   2. a reachability search steps the next few seconds forward (1/30 s at a time, at the lemur's real speed, slow-motion aware) and only allows the spawn if some path still dodges everything.
 
   Nothing spawns too late to clear the lemur before dawn, and standing still too long makes some spawns aim at you, so there's no safe corner to camp in.
+- **Installable and offline.** A web app manifest plus a small service worker ([`sw.js`](sw.js)) cache every file on the first visit, so it installs to the home screen and plays with no connection. The app icons are rendered from the game's own sprites.
 - **All tuning in one place.** Night length, speeds, spawn rates and damage curves live in `TUNE` in [`src/config.js`](src/config.js).
 
 ```
-index.html, style.css
+index.html, style.css, manifest.webmanifest, sw.js
 src/
   main.js       canvas sizing, main loop, test hooks (#dev only)
   state.js      the single shared game state
@@ -75,6 +81,7 @@ python3 qa.py        # 20 checks: fairness every night, power-ups, boss, mechani
 python3 oracle.py    # a path-planning bot plays full runs to prove all 30 nights are beatable
 python3 deadzone.py  # no spot on the branch is much safer than the rest; camping gets punished
 python3 perf.py      # frame time on a phone-sized screen in the busiest scenes
+python3 offline.py   # installs the service worker, cuts the network, checks the game still loads and plays
 ```
 
 Latest results: 20/20 QA checks passed, 0 frames with an impossible wall across 90 simulated nights, every power-up reachable, nothing left falling at dawn, the bot won 3/3 full runs with 0 hits, no spot on the branch is a safe camping corner, and p99 frame time is under 8 ms on a phone-sized canvas.
