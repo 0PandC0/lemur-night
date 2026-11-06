@@ -316,14 +316,15 @@ function branchFloor(p, light) {
 }
 
 const bgCache = {};
-export function bgFor(night, storm, daylight) {
-  const key = daylight ? 'day' : `${weekOf(night)}-${storm ? 1 : 0}`;
+/** sky = false gives the same scene without the moon/sun, used to extend the forest sideways on wide screens. */
+export function bgFor(night, storm, daylight, sky = true) {
+  const key = (daylight ? 'day' : `${weekOf(night)}-${storm ? 1 : 0}`) + (sky ? '' : '-side');
   if (bgCache[key]) return bgCache[key];
   const c = make(LW, LH, (p) => {
     const { rect, ell } = p;
     if (daylight) {
       for (let y = 0; y < LH; y++) { const t = y / LH; rect(0, y, LW, 1, `rgb(${150 + t * 60 | 0},${210 + t * 25 | 0},${240 - t * 30 | 0})`); }
-      ell(100, 34, 6, 6, '#fff3a0');
+      if (sky) ell(100, 34, 6, 6, '#fff3a0');
       [[20, 150, 30, 5], [70, 158, 24, 4], [104, 148, 34, 6]].forEach(([x, b, h, w]) => baobab(p, x, FLOOR, h + (b - 150), w, '#7aa070'));
       branchFloor(p, true);
       return;
@@ -334,7 +335,7 @@ export function bgFor(night, storm, daylight) {
       const t = y / LH, ch = (i) => Math.round((top[i] + t * (bot[i] - top[i])) * dim);
       rect(0, y, LW, 1, `rgb(${ch(0)},${ch(1)},${ch(2)})`);
     }
-    if (!storm) { ell(105, 36, 7, 7, '#2a3a3a'); ell(105, 36, 6, 6, '#f4f0d0'); ell(103, 34, 2, 2, '#e0dcb8'); ell(107, 38, 1, 1, '#e0dcb8'); }
+    if (!sky) { /* no moon on the side panels */ } else if (!storm) { ell(105, 36, 7, 7, '#2a3a3a'); ell(105, 36, 6, 6, '#f4f0d0'); ell(103, 34, 2, 2, '#e0dcb8'); ell(107, 38, 1, 1, '#e0dcb8'); }
     else { // moon behind storm clouds
       ell(105, 36, 6, 6, '#8a8ea0');
       [[93, 38, 12, 4], [112, 33, 10, 4], [60, 28, 16, 4], [20, 40, 18, 5]].forEach(([x, y, rx, ry]) => ell(x, y, rx, ry, '#2a2e3c'));
@@ -345,6 +346,24 @@ export function bgFor(night, storm, daylight) {
     branchFloor(p, false);
   });
   return (bgCache[key] = c);
+}
+
+/** A strip of leafy canopy, tiled along the top of the play area so falling things drop out of the leaves. */
+const canopyCache = {};
+export function canopyFor(night) {
+  const w = weekOf(night);
+  if (canopyCache[w]) return canopyCache[w];
+  const dark = WEEKS[w][2], [top] = WEEKS[w], lit = `rgb(${top[0] + 22},${top[1] + 34},${top[2] + 26})`;
+  return (canopyCache[w] = make(LW, 16, (p) => {
+    const { ell, rect } = p;
+    let seed = 7 + w;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    rect(0, 0, LW, 4, dark);
+    // overlapping leaf clumps with a ragged lower edge
+    for (let x = -4; x < LW + 6; x += 5) ell(x, 3 + (rnd() * 3 | 0), 3 + (rnd() * 2 | 0), 3 + (rnd() * 4 | 0), dark);
+    // a few lit leaf tips catching the moonlight
+    for (let i = 0; i < 26; i++) { const x = rnd() * LW | 0, y = 2 + (rnd() * 6 | 0); rect(x, y, 2, 1, lit); }
+  }));
 }
 
 /** Purple "sugar rush" vignette shown while the fig's slow-motion is active. */

@@ -57,6 +57,9 @@ export const G = {
   drag: { active: false, x: 0, startX: 0, startPx: 0 },
   touch: ('ontouchstart' in window) || navigator.maxTouchPoints > 0,
   S: 3,
+  // full-screen view: the 120x213 play area sits inside a bigger view (VW x VH) that fills the screen
+  view: { VW: 120, VH: 213, ox: 0, oy: 0 },
+  hudY: 0,          // where the HUD sits, in play-area coordinates (top of the screen, below any notch)
 
   offlineReady: false,   // every game file is cached, so it will also run with no connection
 

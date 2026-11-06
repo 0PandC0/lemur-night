@@ -1,14 +1,15 @@
 // Keyboard, mouse and touch. Drag anywhere moves the lemur relative to where the finger went down.
 import { G } from './state.js';
-import { LW, LH } from './config.js';
+import { LW } from './config.js';
 import { audio, toggleMute, music } from './audio.js';
 import { startRun, beginNight, wantedTrack } from './world.js';
 
 const onResultScreen = () => G.state === 'title' || G.state === 'dead' || G.state === 'win';
-const inSoundToggle = (p) => p.y < 8.5 && p.x > LW - 42;
-const inMusicToggle = (p) => p.y >= 8.5 && p.y < 15 && p.x > LW - 42;
+// the HUD row sits at G.hudY (top of the screen), so these hit tests are relative to it
+const inSoundToggle = (p) => p.y - G.hudY < 8.5 && p.x > LW - 42;
+const inMusicToggle = (p) => p.y - G.hudY >= 8.5 && p.y - G.hudY < 15 && p.x > LW - 42;
 /** The pause button in the top-right corner of the HUD (hit area a bit bigger than the icon, for fingers). */
-const inPauseButton = (p) => p.y < 16 && p.x > LW - 17;
+const inPauseButton = (p) => p.y - G.hudY < 16 && p.x > LW - 17;
 
 export function setPaused(v) {
   G.paused = v;
@@ -28,10 +29,12 @@ export function primary() {
 }
 
 export function bindInput(cv) {
+  // screen position -> play-area coordinates (the play area sits inside the bigger full-screen view)
   const toLogical = (e) => {
-    const r = cv.getBoundingClientRect();
-    return { x: (e.clientX - r.left) / r.width * LW, y: (e.clientY - r.top) / r.height * LH };
+    const r = cv.getBoundingClientRect(), v = G.view;
+    return { x: (e.clientX - r.left) / r.width * v.VW - v.ox, y: (e.clientY - r.top) / r.height * v.VH - v.oy };
   };
+
 
   cv.addEventListener('pointerdown', (e) => {
     e.preventDefault();

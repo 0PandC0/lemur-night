@@ -2,7 +2,7 @@
 import { G } from './state.js';
 import { LW, LH, FLOOR, PY, PW, K, FONT, TUNE, NIGHTS, AUTHOR, MILESTONES, isStorm, rankFor } from './config.js';
 import { TEXT } from './content.js';
-import { SPR, GLOW, RUSH, bgFor, LEMUR_OFFSET } from './sprites.js';
+import { SPR, GLOW, RUSH, bgFor, canopyFor, LEMUR_OFFSET } from './sprites.js';
 import { isMuted, music } from './audio.js';
 
 let ctx = null;
@@ -26,6 +26,8 @@ function box(x, y, w, h, fill, line = K) {
   rect(x + 1, y + 1, w - 2, h - 2, fill);
 }
 const blink = (t, hz) => Math.floor(t * hz) % 2 === 0;
+/** Fill the whole screen (the full view around the play area). */
+const fullRect = (c) => { const v = G.view; rect(-v.ox - 2, -v.oy - 2, v.VW + 4, v.VH + 4, c); };
 
 // ---------------------------------------------------------------- scene
 const FIREFLIES = Array.from({ length: 18 }, (_, i) => ({ x: (i * 37 + 11) % LW, y: 30 + ((i * 53) % 150), p: i * 0.9 }));
@@ -37,21 +39,36 @@ function fireflies(t) {
   }
 }
 function rain(t) {
+  const v = G.view, n = Math.round(46 * (v.VW * v.VH) / (LW * LH));
   ctx.fillStyle = 'rgba(170,200,255,0.35)';
-  for (let i = 0; i < 46; i++) {
-    const x = Math.round(((i * 29 + t * 50) % 140) - 10), y = Math.round((i * 53 + t * 230) % LH);
+  for (let i = 0; i < n; i++) {
+    const x = Math.round(((i * 29 + t * 50) % (v.VW + 20)) - 10 - v.ox), y = Math.round(((i * 53 + t * 230) % v.VH) - v.oy);
     ctx.fillRect(x, y, 1, 2); ctx.fillRect(x - 1, y + 2, 1, 2);
   }
 }
+/** Background for the whole screen: the play-area scene, with more sky above, more branch below and forest at the sides. */
+function backdrop(night, storm, daylight) {
+  const v = G.view, bg = bgFor(night, storm, daylight), side = bgFor(night, storm, daylight, false);
+  for (let k = -Math.ceil(v.ox / LW); k <= Math.ceil(v.ox / LW); k++) if (k) draw(side, k * LW, 0);
+  ctx.drawImage(bg, 0, 0, LW, 1, -v.ox - 1, -v.oy - 1, v.VW + 2, v.oy + 2);                 // sky above
+  ctx.drawImage(bg, 0, LH - 1, LW, 1, -v.ox - 1, LH - 1, v.VW + 2, v.VH - v.oy - LH + 3);  // branch below
+  draw(bg, 0, 0);
+  if (v.ox > 0.5) { rect(-v.ox - 1, 0, v.ox + 1, LH, 'rgba(0,0,0,0.35)'); rect(LW, 0, v.ox + 1, LH, 'rgba(0,0,0,0.35)'); }
+  if (v.VH - v.oy - LH > 0.5) rect(-v.ox - 1, LH, v.VW + 2, v.VH - v.oy - LH + 2, 'rgba(0,0,0,0.25)');
+}
+function canopy() {
+  const v = G.view, c = canopyFor(G.night);
+  for (let x = -Math.ceil(v.ox / LW) * LW; x < LW + v.ox; x += LW) draw(c, x, -1);
+}
 function scene(t) {
   const storm = isStorm(G.night);
-  draw(bgFor(G.night, storm, false), 0, 0);
+  backdrop(G.night, storm, false);
   if (!storm) fireflies(t);
   if (!G.boss && G.state === 'play' && G.nightT > G.nightLen - TUNE.dawn) {
     const k = Math.min(1, (G.nightT - (G.nightLen - TUNE.dawn)) / 1.2);
-    rect(0, 0, LW, LH, `rgba(255,170,120,${0.16 * k})`);
+    fullRect(`rgba(255,170,120,${0.16 * k})`);
   }
-  if (G.dayFlash > 0) { ctx.globalAlpha = Math.min(1, G.dayFlash / 0.4); draw(bgFor(1, false, true), 0, 0); ctx.globalAlpha = 1; }
+  if (G.dayFlash > 0) { ctx.globalAlpha = Math.min(1, G.dayFlash / 0.4); backdrop(1, false, true); ctx.globalAlpha = 1; }
 }
 
 // ---------------------------------------------------------------- actors
@@ -120,12 +137,13 @@ function drawBoss(t) {
   const L = b.dir < 0 ? 'L' : '';
   const sp = b.flashT > 0 ? SPR['fossaFlash' + L] : b.rage && Math.floor(t * 6) % 2 ? SPR['fossaRage' + L] : SPR['fossa' + L];
   draw(sp, b.x + jx, b.y);
-  if (b.phase === 'intro' && Math.floor(t * 4) % 2) rect(0, 0, LW, LH, 'rgba(255,90,40,0.12)');
+  if (b.phase === 'intro' && Math.floor(t * 4) % 2) fullRect('rgba(255,90,40,0.12)');
 }
 
 // ---------------------------------------------------------------- HUD + banner
 function drawHUD() {
-  rect(0, 0, LW, 15, 'rgba(6,14,14,0.8)');
+  const v = G.view;
+  rect(-v.ox - 1, Math.min(0, -G.hudY - v.oy - 1), v.VW + 2, 15 + Math.max(0, G.hudY + v.oy + 1), 'rgba(6,14,14,0.8)');
   txt('NIGHT ' + G.night, 3, 6, 7, '#ffffff', 'left');
   if (G.boss) txt('BOSS', 3, 12.5, 4, '#ff8a6a', 'left');
   else if (isStorm(G.night)) txt('STORM', 3, 12.5, 4, '#9ec8ff', 'left');
@@ -141,7 +159,7 @@ function drawHUD() {
     rect(111, 4, 2, 6, '#ffffff'); rect(114, 4, 2, 6, '#ffffff');
   }
   if (G.boss) {
-    rect(0, 15, LW, 5, 'rgba(6,14,14,0.85)');
+    rect(-v.ox - 1, 15, v.VW + 2, 5, 'rgba(6,14,14,0.85)');
     txt('HUNGER', 2, 17.6, 4, '#ffb08a', 'left', false);
     box(21, 15, 97, 5, '#2a2020');
     const hp = Math.max(0, G.boss.hp) / TUNE.bossHunger;
@@ -166,14 +184,15 @@ function drawBanner() {
 
 function soundToggles() {
   const m = isMuted();
-  txt(m ? 'SOUND OFF' : 'SOUND ON', LW - 3, 5, 4, m ? '#7a8a8a' : '#ffffff', 'right', false);
-  txt(music.on ? 'MUSIC ON' : 'MUSIC OFF', LW - 3, 11.5, 4, music.on ? '#ffffff' : '#7a8a8a', 'right', false);
+  const y = G.hudY;
+  txt(m ? 'SOUND OFF' : 'SOUND ON', LW - 3, y + 5, 4, m ? '#7a8a8a' : '#ffffff', 'right', false);
+  txt(music.on ? 'MUSIC ON' : 'MUSIC OFF', LW - 3, y + 11.5, 4, music.on ? '#ffffff' : '#7a8a8a', 'right', false);
 }
 function credit(y) { if (AUTHOR) txt('LEMUR NIGHT BY ' + AUTHOR, LW / 2, y, 4, '#6a8a88', 'center', false); }
 
 // ---------------------------------------------------------------- screens
 function drawTitle(t) {
-  draw(bgFor(1, false, false), 0, 0);
+  backdrop(1, false, false);
   fireflies(t);
   txt(TEXT.title, LW / 2, 26, 20, '#ffd23f');
   txt(TEXT.title2, LW / 2, 44, 11, '#ffffff');
@@ -194,13 +213,13 @@ function drawTitle(t) {
   if (blink(t, 2)) txt(G.touch ? 'TAP TO START' : 'PRESS SPACE', LW / 2, 165, 7, '#ffffff');
   draw(SPR.lemurA, 51 + LEMUR_OFFSET.right, PY);
   txt(G.touch ? 'DRAG ANYWHERE TO MOVE' : 'ARROWS / A D OR DRAG', LW / 2, 206, 4, '#ffffff', 'center', false);
-  txt(G.best > NIGHTS ? 'BEST: LEGEND' : G.best ? 'BEST: NIGHT ' + G.best : '30 NIGHTS. GOOD LUCK.', 3, 5, 4, '#ffd23f', 'left', false);
-  if (G.offlineReady) txt('OFFLINE READY', 3, 11.5, 4, '#8af07a', 'left', false);
+  txt(G.best > NIGHTS ? 'BEST: LEGEND' : G.best ? 'BEST: NIGHT ' + G.best : '30 NIGHTS. GOOD LUCK.', 3, G.hudY + 5, 4, '#ffd23f', 'left', false);
+  if (G.offlineReady) txt('OFFLINE READY', 3, G.hudY + 11.5, 4, '#8af07a', 'left', false);
   soundToggles();
 }
 
 function drawClear(t) {
-  rect(0, 0, LW, LH, 'rgba(8,18,18,0.72)');
+  fullRect('rgba(8,18,18,0.72)');
   txt(TEXT.survived(G.night), LW / 2, 30, 6, '#2ecc55');
   // victory dance on the branch
   const hop = Math.round(Math.abs(Math.sin(G.clearT * 7)) * 7), turn = Math.floor(G.clearT * 3.5) % 2;
@@ -218,7 +237,7 @@ function drawClear(t) {
 function card(y, h, line) { box(8, y, 104, h, '#16282a', K); rect(10, y + 2, 100, 1, line); rect(10, y + h - 3, 100, 1, line); }
 
 function drawDead(t) {
-  rect(0, 0, LW, LH, `rgba(6,10,14,${0.8 * Math.min(1, G.deadT / 0.6)})`);
+  fullRect(`rgba(6,10,14,${0.8 * Math.min(1, G.deadT / 0.6)})`);
   if (G.deadT < 0.9) {
     draw(SPR.sleep, G.px - 2, PY + 5);
     if (G.deadT > 0.3) txt('Z', G.px + 16, PY - 2 - G.deadT * 8, 5, '#bfe0ff');
@@ -244,7 +263,7 @@ function drawDead(t) {
 }
 
 function drawWin(t) {
-  rect(0, 0, LW, LH, 'rgba(8,18,18,0.85)');
+  fullRect('rgba(8,18,18,0.85)');
   if (Math.random() < 0.6) G.parts.push({ x: Math.random() * LW, y: 0, vx: 0, vy: 20, life: 2.5, age: 0, c: ['#ffd23f', '#fff3b0', '#d8ff70'][Math.random() * 3 | 0] });
   for (const p of G.parts) rect(Math.round(p.x), Math.round(p.y), 1, 1, p.c);
   card(18, 184, '#ffd23f');
@@ -265,33 +284,43 @@ function drawWin(t) {
 
 // ---------------------------------------------------------------- frame
 export function render(t) {
-  const S = G.S;
-  ctx.setTransform(S, 0, 0, S, 0, 0);
+  const S = G.S, v = G.view;
+  // play-area coordinates: (0,0) is the top-left of the 120x213 play area, wherever it sits on screen
+  const at = (dx, dy) => ctx.setTransform(S, 0, 0, S, Math.round((v.ox + dx) * S), Math.round((v.oy + dy) * S));
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.imageSmoothingEnabled = false;
-  rect(0, 0, LW, LH, '#06100e');
+  ctx.fillStyle = '#06100e';
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  at(0, 0);
   if (G.state === 'title') return drawTitle(t);
 
   const sx = G.shake > 0 ? Math.round((Math.random() * 2 - 1) * 1.5) : 0, sy = G.shake > 0 ? Math.round((Math.random() * 2 - 1) * 1.5) : 0;
-  ctx.setTransform(S, 0, 0, S, sx * S, sy * S);
+  at(sx, sy);
   scene(t);
+  // actors are clipped to the play area, and drop out of the canopy at its top edge
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, LW, LH); ctx.clip();
   drawPounces(t);
   drawBoss(t);
   drawItems(t);
   drawWarns(t);
   if (G.state !== 'dead') drawLemur(t);
+  ctx.restore();
+  canopy();
   if (isStorm(G.night) && G.state === 'play') rain(t);
   for (const p of G.parts) { ctx.globalAlpha = Math.max(0, 1 - p.age / p.life); rect(Math.round(p.x), Math.round(p.y), 1, 1, p.c); }
   ctx.globalAlpha = 1;
-  if (G.slowT > 0) { ctx.globalAlpha = Math.min(1, G.slowT * 2); draw(RUSH, 0, 0); ctx.globalAlpha = 1; }
+  if (G.slowT > 0) { ctx.globalAlpha = Math.min(1, G.slowT * 2); ctx.drawImage(RUSH, -v.ox, -v.oy, v.VW, v.VH); ctx.globalAlpha = 1; }
   for (const f of G.floats) { ctx.globalAlpha = Math.max(0, 1 - f.age / f.life); txt(f.t, f.x, f.y, 6, f.c); }
   ctx.globalAlpha = 1;
-  if (G.flash > 0) rect(0, 0, LW, LH, `rgba(255,60,40,${G.flash * 0.5})`);
+  if (G.flash > 0) fullRect(`rgba(255,60,40,${G.flash * 0.5})`);
 
-  ctx.setTransform(S, 0, 0, S, 0, 0);
+  at(0, G.hudY);
   drawHUD();
+  at(0, 0);
   drawBanner();
   if (G.paused) {
-    rect(0, 0, LW, LH, 'rgba(6,14,14,0.7)');
+    fullRect('rgba(6,14,14,0.7)');
     txt('PAUSED', LW / 2, 96, 11, '#ffd23f');
     txt(G.touch ? 'TAP TO RESUME' : 'PRESS P TO RESUME', LW / 2, 112, 4, '#ffffff');
   }

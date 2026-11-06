@@ -12,15 +12,24 @@ const cv = document.getElementById('game');
 const wrap = document.getElementById('wrap');
 setContext(cv.getContext('2d'));
 
-/** Integer-scale the 120x213 canvas to the largest size that fits, at device pixel ratio. */
+/**
+ * Full screen: the 120x213 play area is scaled as big as fits, and the canvas covers the whole screen around it.
+ * The extra space is filled with more sky above and more branch below (or forest at the sides on wide screens),
+ * so gameplay is identical on every screen shape.
+ */
 function resize() {
   const dpr = window.devicePixelRatio || 1;
-  const cs = Math.max(0.5, Math.min(wrap.clientWidth / LW, wrap.clientHeight / LH));
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  const cs = Math.max(0.5, Math.min(w / LW, h / LH));
+  const VW = w / cs, VH = h / cs;
   G.S = Math.max(1, Math.round(cs * dpr));
-  cv.width = LW * G.S;
-  cv.height = LH * G.S;
-  cv.style.width = LW * cs + 'px';
-  cv.style.height = LH * cs + 'px';
+  G.view = { VW, VH, ox: (VW - LW) / 2, oy: (VH - LH) * 0.7 };   // most of the spare height goes above, as sky
+  const safeTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-top')) || 0;
+  G.hudY = -G.view.oy + safeTop / cs;
+  cv.width = Math.round(VW * G.S);
+  cv.height = Math.round(VH * G.S);
+  cv.style.width = w + 'px';
+  cv.style.height = h + 'px';
 }
 window.addEventListener('resize', resize);
 bindInput(cv);

@@ -1,6 +1,6 @@
 // Offline support: every file the game needs is cached on first visit, so it also plays with no connection.
 // Bump VERSION whenever you publish changes; old caches are cleared automatically.
-const VERSION = 'lemur-night-v3';
+const VERSION = 'lemur-night-v4';
 const FILES = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
   'assets/fonts/silkscreen.woff2',
